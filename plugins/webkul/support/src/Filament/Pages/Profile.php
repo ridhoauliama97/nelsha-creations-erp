@@ -82,7 +82,7 @@ class Profile extends Page implements HasForms
                             ->visibility('public')
                             ->disk('public')
                             ->acceptedFileTypes(['image/jpeg', 'image/jpg', 'image/png', 'image/webp'])
-                            ->maxSize(2048)
+                            ->maxSize(10240)
                             ->image()
                             ->imageEditor()
                             ->imageEditorAspectRatioOptions([

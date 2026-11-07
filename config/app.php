@@ -79,7 +79,7 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    'timezone' => env('APP_TIMEZONE', 'Asia/Jakarta'),
 
     /*
     |--------------------------------------------------------------------------
@@ -92,11 +92,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => env('APP_LOCALE', 'id'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'faker_locale' => env('APP_FAKER_LOCALE', 'id_ID'),
 
     /*
     |--------------------------------------------------------------------------
@@ -111,6 +111,12 @@ return [
     */
 
     'supported_locales' => [
+        'id' => [
+            'label'  => 'Bahasa Indonesia',
+            'native' => 'Bahasa Indonesia',
+            'flag'   => 'id',
+            'rtl'    => false,
+        ],
         'en' => [
             'label'  => 'English',
             'native' => 'English',
@@ -151,7 +157,7 @@ return [
     | Here you may specify the base currency code for your application.
     |
     */
-    'currency' => env('APP_CURRENCY', 'USD'),
+    'currency' => env('APP_CURRENCY', 'IDR'),
 
     /*
     |--------------------------------------------------------------------------

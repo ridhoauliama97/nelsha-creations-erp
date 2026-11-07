@@ -1,107 +1,125 @@
+# AureusERP — stack Docker Alpine ringan (semua image berbasis Alpine).
+#
+# Service:
+#   app    : php:8.4-fpm-alpine + nginx-alpine (satu image, build dari docker/php/Dockerfile)
+#   mysql  : mariadb:11-alpine (kompatibel MySQL, Laravel DB_CONNECTION=mysql tetap dipakai)
+#   queue  : image yang sama dengan app, perintah queue:work
+#
+# Cara pakai:
+#   docker compose up --build -d      # build + jalankan
+#   docker compose logs -f            # lihat log
+#   docker compose down               # berhenti
+#   docker compose down -v            # berhenti + hapus volume data
+#
+# Akses: http://localhost:8080  (panel admin: http://localhost:8080/admin)
+# Admin awal: admin@example.com / password — GANTI setelah login pertama.
+#   Ubah lewat variabel ADMIN_* di bawah, atau .env:
+#
+# Catatan .env: kode aplikasi dibakar (COPY) ke dalam image. Perubahan file
+# kode/.env di host baru terlihat setelah `docker compose up --build`.
+# Override cepat tanpa rebuild: ubah `environment:` di bawah (langsung dipakai).
+#
+# Queue worker pakai --memory=512 (flag Laravel, bukan php.ini): boot aplikasi
+# dengan semua plugin ter-install sudah melewati 128 MB, default --memory
+# bawaan Laravel membuat worker berhenti segera setelah start.
+
 services:
-  laravel.test:
+  app:
     build:
-      context: ./vendor/laravel/sail/runtimes/8.4
-      dockerfile: Dockerfile
-      args:
-        WWWGROUP: '${WWWGROUP}'
-
-    image: sail-8.4/app
-
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: aureuserp-app
+    restart: unless-stopped
     ports:
-      - '${APP_PORT:-80}:80'
+      - '${APP_PORT:-8080}:80'
       - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-
     environment:
-      WWWUSER: '${WWWUSER}'
-      LARAVEL_SAIL: 1
-      XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
-      XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
-      IGNITION_LOCAL_SITES_PATH: '${PWD}'
-
+      APP_NAME: '${APP_NAME:-AureusERP}'
+      APP_ENV: '${APP_ENV:-local}'
+      APP_DEBUG: '${APP_DEBUG:-true}'
+      APP_URL: '${APP_URL:-http://localhost:8080}'
+      APP_LOCALE: 'id'
+      APP_FALLBACK_LOCALE: 'en'
+      APP_FAKER_LOCALE: 'id_ID'
+      APP_CURRENCY: 'IDR'
+      APP_TIMEZONE: 'Asia/Jakarta'
+      APP_COUNTRY: 'ID'
+      DB_CONNECTION: 'mysql'
+      DB_HOST: 'mysql'
+      DB_PORT: '3306'
+      DB_DATABASE: '${DB_DATABASE:-aureuserp}'
+      DB_USERNAME: '${DB_USERNAME:-aureuserp}'
+      DB_PASSWORD: '${DB_PASSWORD:-secret}'
+      # Kredensial admin untuk instalasi otomatis pertama.
+      ADMIN_NAME: '${ADMIN_NAME:-Administrator}'
+      ADMIN_EMAIL: '${ADMIN_EMAIL:-admin@example.com}'
+      ADMIN_PASSWORD: '${ADMIN_PASSWORD:-password}'
+      AUTO_INSTALL: 'true'
     volumes:
-      - '.:/var/www/html'
-
-    networks:
-      - sail
-
+      - app-storage:/var/www/html/storage
     depends_on:
-      - mysql
-      - redis
-      - mailpit
+      mysql:
+        condition: service_healthy
 
+  queue:
+    image: aureuserp-app
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    restart: unless-stopped
+    environment:
+      APP_ENV: '${APP_ENV:-local}'
+      APP_LOCALE: 'id'
+      APP_CURRENCY: 'IDR'
+      APP_TIMEZONE: 'Asia/Jakarta'
+      DB_CONNECTION: 'mysql'
+      DB_HOST: 'mysql'
+      DB_PORT: '3306'
+      DB_DATABASE: '${DB_DATABASE:-aureuserp}'
+      DB_USERNAME: '${DB_USERNAME:-aureuserp}'
+      DB_PASSWORD: '${DB_PASSWORD:-secret}'
+      RUN_QUEUE: '1'
+      AUTO_INSTALL: 'false'
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      app:
+        condition: service_healthy
+    # Override healthcheck image (wget /health): di container queue nginx tidak
+    # jalan — healthcheck image selalu gagal walau worker sehat. Cek prosesnya.
+    healthcheck:
+      test: ['CMD-SHELL', 'pgrep -f "queue:work"']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # MariaDB 11 (kompatibel wire-protocol MySQL, driver Laravel `mysql` tetap dipakai).
+  # Imej resmi mysql:8.0 berukuran 1,1 GB & bukan Alpine; MariaDB hanya 458 MB.
+  # Ingin MySQL asli (Oracle)? Ganti image menjadi 'mysql:8.0' dan env menjadi
+  # MYSQL_ROOT_PASSWORD / MYSQL_DATABASE / MYSQL_USER / MYSQL_PASSWORD.
   mysql:
-    image: 'mysql/mysql-server:8.0'
-
+    image: 'mariadb:11'
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
       - '${FORWARD_DB_PORT:-3306}:3306'
-
     environment:
-      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: '${DB_DATABASE}'
-      MYSQL_USER: '${DB_USERNAME}'
-      MYSQL_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 1
-
+      MARIADB_ROOT_PASSWORD: '${DB_ROOT_PASSWORD:-rootsecret}'
+      MARIADB_DATABASE: '${DB_DATABASE:-aureuserp}'
+      MARIADB_USER: '${DB_USERNAME:-aureuserp}'
+      MARIADB_PASSWORD: '${DB_PASSWORD:-secret}'
     volumes:
-      - 'sail-mysql:/var/lib/mysql'
-      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-
-    networks:
-      - sail
-
+      - mysql-data:/var/lib/mysql
     healthcheck:
-      test:
-        - CMD
-        - mysqladmin
-        - ping
-        - '-p${DB_PASSWORD}'
-
-      retries: 3
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      interval: 5s
       timeout: 5s
-
-  redis:
-    image: 'redis:alpine'
-
-    ports:
-      - '${FORWARD_REDIS_PORT:-6379}:6379'
-
-    volumes:
-      - 'sail-redis:/data'
-
-    networks:
-      - sail
-
-    healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - ping
-
-      retries: 3
-      timeout: 5s
-
-  mailpit:
-    image: 'axllent/mailpit:latest'
-
-    ports:
-      - '${FORWARD_MAILPIT_PORT:-1025}:1025'
-      - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
-
-    networks:
-      - sail
-
-networks:
-  sail:
-    driver: bridge
+      retries: 20
+      start_period: 10s
 
 volumes:
-  sail-mysql:
+  mysql-data:
     driver: local
-
-  sail-redis:
+  app-storage:
     driver: local
