@@ -60,7 +60,7 @@ class SendQuotationsEmailBulkAction extends BulkAction
 
             Storage::disk('public')->put($filePath, Pdf::loadView('sales::sales.quotation', ['record' => $order, 'isPdf' => true])
                 ->setPaper('A4', 'portrait')
-                ->setOption('defaultFont', 'Arial')
+                ->setOption('defaultFont', 'Roboto')
                 ->output());
 
             $result = SaleOrder::sendQuotationOrOrderByEmail($order, [

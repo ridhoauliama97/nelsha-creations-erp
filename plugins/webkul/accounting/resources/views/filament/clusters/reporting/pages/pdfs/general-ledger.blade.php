@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}" dir="{{ $isRtl ? 'rtl' : 'ltr' }}">
 <head>
+    @include('pdf.fonts')
     <meta charset="utf-8">
     <title>{{ __('accounting::filament/clusters/reporting.common.from-to', ['report' => __('accounting::filament/clusters/reporting.pages.general-ledger.navigation.title'), 'from' => \Carbon\Carbon::parse($data['date_from'])->format('M d, Y'), 'to' => \Carbon\Carbon::parse($data['date_to'])->format('M d, Y')]) }}</title>
     <style>
@@ -14,7 +15,7 @@
         p,
         b,
         strong {
-            font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif !important;
+            font-family: 'Roboto', sans-serif !important;
         }
 
         @page {
@@ -23,7 +24,7 @@
         }
         
         body {
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Roboto', sans-serif;
             font-size: 11pt;
             color: #1f2937;
             line-height: 1.3;

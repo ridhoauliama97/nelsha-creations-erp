@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}" dir="{{ $isRtl ? 'rtl' : 'ltr' }}">
 <head>
+    @include('pdf.fonts')
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style type="text/css">
         @if ($isPdf ?? false)
@@ -18,7 +19,7 @@
         .quotation-document p,
         .quotation-document b,
         .quotation-document strong {
-            font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif !important;
+            font-family: 'Roboto', sans-serif !important;
         }
 
         .quotation-document {

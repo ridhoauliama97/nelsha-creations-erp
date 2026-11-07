@@ -26,7 +26,7 @@ trait PDFHandler
 
         return Pdf::loadHTML($html)
             ->setPaper('A4', 'portrait')
-            ->setOption('defaultFont', 'DejaVu Sans')
+            ->setOption('defaultFont', 'Roboto')
             ->setOption('isHtml5ParserEnabled', true)
             ->setOption('isRemoteEnabled', true);
     }

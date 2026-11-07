@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}" dir="{{ $isRtl ? 'rtl' : 'ltr' }}">
 <head>
+    @include('pdf.fonts')
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <style>
         html,
@@ -13,7 +14,7 @@
         p,
         b,
         strong {
-            font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif !important;
+            font-family: 'Roboto', sans-serif !important;
         }
 
         @page {
@@ -24,7 +25,7 @@
         body {
             margin: 0;
             padding: 15px;
-            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-family: 'Roboto', sans-serif;
             background: #ffffff;
         }
 

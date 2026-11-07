@@ -33,7 +33,7 @@ class SendByEmailAction extends Action
             ->beforeFormFilled(function (Order $record, Action $action) {
                 $pdf = Pdf::loadView('sales::sales.quotation', ['record' => $record, 'isPdf' => true])
                     ->setPaper('A4', 'portrait')
-                    ->setOption('defaultFont', 'Arial');
+                    ->setOption('defaultFont', 'Roboto');
 
                 $fileName = "$record->name-".time().'.pdf';
                 $filePath = 'sales-orders/'.$fileName;
