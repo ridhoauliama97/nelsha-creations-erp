@@ -94,6 +94,7 @@ cd nelsha-creations-erp
 composer install
 
 php artisan erp:install        # jalankan hanya pada database KOSONG — me-wipe data
+php artisan db:seed --class=InstanceSeeder   # konfigurasi instance: PPN 11 %, IDR, locale, dsb.
 php artisan serve              # http://localhost:8000
 ```
 
