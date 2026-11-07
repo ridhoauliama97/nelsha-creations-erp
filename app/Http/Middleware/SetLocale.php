@@ -27,13 +27,23 @@ class SetLocale
 
         $user = $request->user();
 
+        // Explicit ?lang= wins for this request. Otherwise the authenticated
+        // user's preferred language (profile setting) is authoritative and
+        // takes precedence over any stale session locale, so changing the
+        // profile language is reflected immediately in the panels.
         $locale = $queryLang
-            ?? $this->pick(Session::get('locale'), $supported)
             ?? $this->pick($user?->language ?? null, $supported)
+            ?? $this->pick(Session::get('locale'), $supported)
             ?? $fallback;
 
         if ($queryLang !== null && Session::get('locale') !== $queryLang) {
             Session::put('locale', $queryLang);
+        }
+
+        // Keep the session in sync with the resolved locale for signed-in
+        // users, so a previously stored locale cannot override the profile.
+        if ($user && Session::get('locale') !== $locale) {
+            Session::put('locale', $locale);
         }
 
         if (App::getLocale() !== $locale) {
